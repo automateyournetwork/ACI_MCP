@@ -219,15 +219,15 @@ for entry in ungrouped:
     mcp.add_tool(post_tool)
 
     # DELETE
-    # def create_delete_tool(endpoint: str):
-    #     def tool() -> dict:
-    #         return aci_controller.delete(endpoint)
-    #     return tool
+    def create_delete_tool(endpoint: str):
+        def tool() -> dict:
+            return aci_controller.delete(endpoint)
+        return tool
 
-    # delete_tool = create_delete_tool(api_url_path)
-    # delete_tool.__name__ = f"{tool_base}_delete"
-    # delete_tool.__doc__ = f"DELETE resource at {name or api_url_path} in ACI (ungrouped)."
-    # mcp.add_tool(delete_tool)
+    delete_tool = create_delete_tool(api_url_path)
+    delete_tool.__name__ = f"{tool_base}_delete"
+    delete_tool.__doc__ = f"DELETE resource at {name or api_url_path} in ACI (ungrouped)."
+    mcp.add_tool(delete_tool)
 
     logger.info(f"✅ Registered individual GET tool for {name or api_url_path}")
 # ------------------------------- Entry Point -------------------------------
