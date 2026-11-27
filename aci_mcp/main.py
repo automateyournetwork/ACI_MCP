@@ -1,4 +1,9 @@
-import os
+# Decorator-based registration approach
+def make_group_tool(valid_endpoints, group_name, name, description):
+    @mcp.tool(name=name, description=description)  # Using @mcp.tool decorator
+    def group_tool(input: GroupToolInput) -> dict:
+        # ... tool logic
+    return group_toolimport os
 import re
 import json
 import logging
@@ -163,8 +168,12 @@ for entry in URLS:
 # 1️⃣ Register grouped tools
 for group, endpoints in grouped.items():
     endpoint_choices = [e["URL"] for e in endpoints if e.get("URL")]
+    tool_base = re.sub(r'[^a-z0-9_-]', '_', group.replace(" ", "_").lower())
+    tool_name = f"{tool_base}_get"
+    tool_description = f"GET any endpoint from group '{group}' ({len(endpoint_choices)} endpoints)."
 
-    def make_group_tool(valid_endpoints, group_name):
+    def make_group_tool(valid_endpoints, group_name, name, description):
+        @mcp.tool(name=name, description=description)
         def group_tool(input: GroupToolInput) -> dict:
             if input.endpoint not in valid_endpoints:
                 raise ToolError(f"Invalid endpoint for group '{group_name}'. Must be one of: {valid_endpoints}")
@@ -176,11 +185,7 @@ for group, endpoints in grouped.items():
             return aci_controller.get(input.endpoint, args)
         return group_tool
 
-    tool_base = re.sub(r'[^a-z0-9_-]', '_', group.replace(" ", "_").lower())
-    tool_fn = make_group_tool(endpoint_choices, group)
-    tool_fn.__name__ = f"{tool_base}_get"
-    tool_fn.__doc__ = f"GET any endpoint from group '{group}' ({len(endpoint_choices)} endpoints)."
-    mcp.add_tool(tool_fn)
+    make_group_tool(endpoint_choices, group, tool_name, tool_description)
     logger.info(f"✅ Registered grouped GET tool for {group} ({len(endpoint_choices)} endpoints)")
 
 # 2️⃣ Register ungrouped tools as standalone CRUD
@@ -194,7 +199,8 @@ for entry in ungrouped:
     tool_base = re.sub(r'[^a-z0-9_-]', '_', name.replace(" ", "_").lower())
 
     # READ
-    def create_read_tool(endpoint: str):
+    def create_read_tool(endpoint: str, tool_name: str, description: str):
+        @mcp.tool(name=tool_name, description=description)
         def tool(params: NonFilterableToolInput = Field(default_factory=NonFilterableToolInput)) -> dict:
             args = {}
             if params.query_params:
@@ -202,32 +208,25 @@ for entry in ungrouped:
             return aci_controller.get(endpoint, args)
         return tool
 
-    read_tool = create_read_tool(api_url_path)
-    read_tool.__name__ = f"{tool_base}_get"
-    read_tool.__doc__ = f"GET data for {name or api_url_path} from ACI (ungrouped)."
-    mcp.add_tool(read_tool)
+    create_read_tool(api_url_path, f"{tool_base}_get", f"GET data for {name or api_url_path} from ACI (ungrouped).")
 
     # CREATE (POST)
-    def create_post_tool(endpoint: str):
+    def create_post_tool(endpoint: str, tool_name: str, description: str):
+        @mcp.tool(name=tool_name, description=description)
         def tool(input: CreateToolInput) -> dict:
             return aci_controller.post(endpoint, input.payload)
         return tool
 
-    post_tool = create_post_tool(api_url_path)
-    post_tool.__name__ = f"{tool_base}_post"
-    post_tool.__doc__ = f"POST (create) data to {name or api_url_path} in ACI (ungrouped)."
-    mcp.add_tool(post_tool)
+    create_post_tool(api_url_path, f"{tool_base}_post", f"POST (create) data to {name or api_url_path} in ACI (ungrouped).")
 
     # DELETE
-    def create_delete_tool(endpoint: str):
+    def create_delete_tool(endpoint: str, tool_name: str, description: str):
+        @mcp.tool(name=tool_name, description=description)
         def tool() -> dict:
             return aci_controller.delete(endpoint)
         return tool
 
-    delete_tool = create_delete_tool(api_url_path)
-    delete_tool.__name__ = f"{tool_base}_delete"
-    delete_tool.__doc__ = f"DELETE resource at {name or api_url_path} in ACI (ungrouped)."
-    mcp.add_tool(delete_tool)
+    create_delete_tool(api_url_path, f"{tool_base}_delete", f"DELETE resource at {name or api_url_path} in ACI (ungrouped).")
 
     logger.info(f"✅ Registered individual GET tool for {name or api_url_path}")
 # ------------------------------- Entry Point -------------------------------
