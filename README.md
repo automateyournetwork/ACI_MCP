@@ -59,6 +59,17 @@ Edit
 }
 This launches the MCP server inside WSL, using stdin/stdout for tool discovery and calling.
 
+Note: If you are using a MACBOOK instead, please note that the wsl command isn't available, so you might want to change it to python instead. In the args section, you can remove the environment variables and just leave the full path of main.py. please refer to example below:
+
+            "mcp-aci": {
+                "type": "stdio",
+                "command": "python",
+                "args": [
+                    "/Users/lindawa/Documents/GenAI/aci_mcp/main.py"
+                ]
+            }
+
+
 🤖 In Claude or any A2A-compatible agent:
 Claude-compatible assistants can auto-discover tools using this STDIO-based server via Model Context Protocol.
 
