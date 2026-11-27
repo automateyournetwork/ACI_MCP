@@ -18,6 +18,46 @@ Built on the [FastMCP](https://github.com/modelcontext/fastmcp) framework and fu
 
 ---
 
+## TLS certificate verification
+
+APIC login and REST requests verify the server's TLS certificate and hostname
+using [Requests' default verification](https://requests.readthedocs.io/en/latest/user/advanced/#ssl-cert-verification).
+Use an HTTPS `APIC_URL` whose hostname matches the certificate's Subject
+Alternative Name (SAN). If the URL uses an IP address, the certificate must
+include that IP address in its SANs.
+
+For an internal CA or a self-signed certificate, configure an explicitly trusted
+PEM CA bundle in the server's environment or `.env` file:
+
+```env
+APIC_URL=https://apic.example.com
+REQUESTS_CA_BUNDLE=/absolute/path/to/apic-ca-bundle.pem
+```
+
+The bundle should contain the trusted CA certificates for your APIC (or the
+explicitly trusted self-signed certificate). The path must be readable by the
+MCP server process. For Docker, mount the bundle into the container and set
+`REQUESTS_CA_BUNDLE` to its path inside the container.
+
+Deployments that previously relied on disabled verification must configure a
+trusted certificate chain and a matching hostname. Certificate validation
+failures stop the request; the client does not retry with verification disabled.
+
+## Running the tests
+
+From the repository root, with Python 3.11 or later:
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+The TLS tests use real Requests calls to synthetic HTTPS servers on loopback,
+temporary CA certificates, and dummy credentials. They cover trusted login and
+REST reads, untrusted CAs, hostname mismatches, and rejection before any HTTP
+request reaches an invalid endpoint. No APIC access or production credentials
+are needed.
+
 ## 📁 Folder Structure
 
 ```bash

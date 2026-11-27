@@ -1,0 +1,3 @@
+-r aci_mcp/requirements.txt
+pytest
+trustme

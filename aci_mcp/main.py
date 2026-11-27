@@ -1,14 +1,8 @@
-# Decorator-based registration approach
-def make_group_tool(valid_endpoints, group_name, name, description):
-    @mcp.tool(name=name, description=description)  # Using @mcp.tool decorator
-    def group_tool(input: GroupToolInput) -> dict:
-        # ... tool logic
-    return group_toolimport os
+import os
 import re
 import json
 import logging
 import requests
-import urllib3
 import asyncio
 from typing import Dict, Any, Optional, Literal, Union, List
 from pydantic import BaseModel, Field
@@ -17,7 +11,6 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
 load_dotenv()
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("ACIMCPServer")
@@ -53,7 +46,7 @@ class ACIController:
             }
         }
         try:
-            response = requests.post(login_url, json=payload, verify=False)
+            response = requests.post(login_url, json=payload)
             response.raise_for_status()
             logger.info("✅ Authenticated with APIC.")
             return response.cookies
@@ -85,7 +78,6 @@ class ACIController:
                 url,
                 headers=HEADERS,
                 cookies=cookies,
-                verify=False,
                 timeout=15,
                 **kwargs
             )
